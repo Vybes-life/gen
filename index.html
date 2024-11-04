@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ComfyUI Image Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f0f0f0;
+            padding: 10px;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .input-section {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 16px;
+            line-height: 1.5;
+            font-family: inherit;
+            -webkit-appearance: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.2);
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            max-width: 300px;
+            transition: background-color 0.2s, transform 0.1s;
+            display: block;
+            margin: 0 auto;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 10px 0;
+            width: 100%;
+        }
+
+        @media (max-width: 600px) {
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            height: fit-content;
+        }
+
+        .image-card:active {
+            transform: scale(0.98);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+        }
+
+        .image-card .title {
+            padding: 12px 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            color: #333;
+        }
+
+        .status {
+            margin: 15px 0;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .status.error {
+            background: #fff2f2;
+            color: #d63031;
+            border: 1px solid #ffcdd2;
+        }
+
+        .status.success {
+            background: #f0fff4;
+            color: #27ae60;
+            border: 1px solid #c3e6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+        }
+
+        .loading::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 2px solid #007bff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Floating action button for mobile */
+        .scroll-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .scroll-top.visible {
+            display: flex;
+        }
+
+        /* Touch-friendly zoom interface */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            z-index: 2000;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .image-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            max-width: 95%;
+            max-height: 95%;
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        .progress-container {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .progress-item {
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .progress-item.pending {
+            border-left: 3px solid #ffd700;
+        }
+
+        .progress-item.generating {
+            border-left: 3px solid #007bff;
+        }
+
+        .progress-item.completed {
+            border-left: 3px solid #28a745;
+        }
+
+        .progress-item.error {
+            border-left: 3px solid #dc3545;
+        }
+
+        /* Prompt preview styles */
+        .prompt-preview {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .prompt-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+  <div class="container">
+    <div class="input-section">
+        <textarea id="promptInput" placeholder="Enter your image prompts here...&#10;Format: {{{Cover Page-:: prompt text&#10;hairstyle1-:: prompt text}}}"></textarea>
+        <button onclick="validateAndShowPrompts()">Preview Prompts</button>
+        <div id="promptPreview" class="prompt-preview" style="display: none;"></div>
+        <button onclick="generateImages()" id="generateButton" style="display: none;">Start Generation</button>
+        <div id="status" class="status"></div>
+        <div id="progressContainer" class="progress-container"></div>
+    </div>
+    <div id="imageGrid" class="image-grid"></div>
+</div>
+
+<div class="scroll-top" id="scrollTop" onclick="scrollToTop()">↑</div>
+<div class="image-modal" id="imageModal" onclick="closeModal(event)">
+    <div class="modal-content">
+        <img id="modalImage" src="" alt="">
+        <div class="close-modal" onclick="closeModal(event)">×</div>
+    </div>
+</div>
+
+    <script>
+        const workflow = {
+    "6": {
+        "inputs": {
+            "text": "",
+            "clip": ["11", 0]
+        },
+        "class_type": "CLIPTextEncode"
+    },
+    "8": {
+        "inputs": {
+            "samples": ["13", 0],
+            "vae": ["10", 0]
+        },
+        "class_type": "VAEDecode"
+    },
+    "9": {
+        "inputs": {
+            "filename_prefix": "ComfyUI",
+            "images": ["8", 0]
+        },
+        "class_type": "SaveImage"
+    },
+    "10": {
+        "inputs": {
+            "vae_name": "ae.sft"
+        },
+        "class_type": "VAELoader"
+    },
+    "11": {
+        "inputs": {
+            "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+            "clip_name2": "clip_l.safetensors",
+            "type": "flux"
+        },
+        "class_type": "DualCLIPLoader"
+    },
+    "12": {
+        "inputs": {
+            "unet_name": "pixelwave_flux1_dev_fp8_03.safetensors",
+            "weight_dtype": "fp8_e4m3fn"
+        },
+        "class_type": "UNETLoader"
+    },
+    "13": {
+        "inputs": {
+            "noise": ["25", 0],
+            "guider": ["22", 0],
+            "sampler": ["16", 0],
+            "sigmas": ["17", 0],
+            "latent_image": ["27", 0]
+        },
+        "class_type": "SamplerCustomAdvanced"
+    },
+    "16": {
+        "inputs": {
+            "sampler_name": "dpmpp_2m"
+        },
+        "class_type": "KSamplerSelect"
+    },
+    "17": {
+        "inputs": {
+            "scheduler": "sgm_uniform",
+            "steps": 30,
+            "denoise": 1,
+            "model": ["12", 0]
+        },
+        "class_type": "BasicScheduler"
+    },
+    "22": {
+        "inputs": {
+            "model": ["12", 0],
+            "conditioning": ["26", 0]
+        },
+        "class_type": "BasicGuider"
+    },
+    "25": {
+        "inputs": {
+            "noise_seed": 1040318553032668
+        },
+        "class_type": "RandomNoise"
+    },
+    "26": {
+        "inputs": {
+            "guidance": 3.5,
+            "conditioning": ["6", 0]
+        },
+        "class_type": "FluxGuidance"
+    },
+    "27": {
+        "inputs": {
+            "width": 1440,
+            "height": 2560,
+            "batch_size": 1
+        },
+        "class_type": "EmptySD3LatentImage"
+    }
+};
+
+window.onscroll = function() {
+    const scrollTop = document.getElementById('scrollTop');
+    if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+        scrollTop.classList.add('visible');
+    } else {
+        scrollTop.classList.remove('visible');
+    }
+};
+
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
+function openModal(imageUrl, title) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    modalImage.src = imageUrl;
+    modalImage.alt = title;
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(event) {
+    event.stopPropagation();
+    const modal = document.getElementById('imageModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function parsePrompts(input) {
+    const promptRegex = /^([^\n]+?)\s*-\s*:\s*([\s\S]+?)(?=\n[^\n]+?\s*-\s*:|$)/gm;
+    const prompts = [];
+    
+    let match;
+    while ((match = promptRegex.exec(input)) !== null) {
+        const name = match[1].trim();
+        const prompt = match[2].trim();
+        
+        if (name && prompt) {
+            prompts.push({
+                name: name,
+                prompt: prompt
+            });
+        }
+    }
+
+    return prompts;
+}
+
+function validateAndShowPrompts() {
+    const input = document.getElementById('promptInput').value;
+    const promptPreview = document.getElementById('promptPreview');
+    const generateButton = document.getElementById('generateButton');
+    const prompts = parsePrompts(input);
+
+    if (prompts.length === 0) {
+        alert('No valid prompts found. Please check the format: Name -: prompt');
+        return;
+    }
+
+    promptPreview.innerHTML = `
+        <h3>Found ${prompts.length} prompts:</h3>
+        ${prompts.map((p, i) => `
+            <div class="prompt-item">
+                <strong>${i + 1}. ${p.name}</strong>
+                <div class="prompt-preview">
+                    ${p.prompt.substring(0, 150)}...
+                    <button onclick="togglePrompt(${i})" class="toggle-btn">Show More</button>
+                </div>
+                <div id="full-prompt-${i}" class="full-prompt" style="display: none;">
+                    ${p.prompt}
+                </div>
+            </div>
+        `).join('')}
+    `;
+    promptPreview.style.display = 'block';
+    generateButton.style.display = 'block';
+}
+
+function togglePrompt(index) {
+    const preview = document.querySelector(`#full-prompt-${index}`);
+    const btn = document.querySelector(`#full-prompt-${index}`).previousElementSibling.querySelector('.toggle-btn');
+    if (preview.style.display === 'none') {
+        preview.style.display = 'block';
+        btn.textContent = 'Show Less';
+    } else {
+        preview.style.display = 'none';
+        btn.textContent = 'Show More';
+    }
+}
+
+async function updateProgress(promptName, version, status, message = '') {
+    const progressContainer = document.getElementById('progressContainer');
+    const progressId = `progress-${promptName}-${version}`.replace(/\s+/g, '-');
+    let progressItem = document.getElementById(progressId);
+
+    if (!progressItem) {
+        progressItem = document.createElement('div');
+        progressItem.id = progressId;
+        progressItem.className = 'progress-item';
+        progressContainer.appendChild(progressItem);
+    }
+
+    progressItem.className = `progress-item ${status}`;
+    progressItem.textContent = `${promptName} (Version ${version}): ${message}`;
+}
+
+async function generateSingleImage(prompt, name, version) {
+    try {
+        updateProgress(name, version, 'generating', 'Initializing generation...');
+        
+        const workflowInstance = JSON.parse(JSON.stringify(workflow));
+        workflowInstance["6"].inputs.text = prompt;
+        workflowInstance["25"].inputs.noise_seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+
+        const clientId = crypto.randomUUID();
+        const startTime = Date.now(); // Record start time
+        
+        updateProgress(name, version, 'generating', 'Sending prompt to server...');
+        
+        // Send prompt
+        await fetch('https://o1eubsnq17nqk1-8188.proxy.runpod.net/prompt', {
+            method: 'POST',
+            mode: "no-cors",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: workflowInstance, client_id: clientId })
+        });
+
+        // Wait for the prompt to be processed
+        await new Promise(resolve => setTimeout(resolve, 10000));
+
+        // Find the prompt ID and wait for completion
+        let promptId = null;
+        let isCompleted = false;
+        let retries = 0;
+        const maxRetries = 60;
+        const retryInterval = 5000;
+
+        updateProgress(name, version, 'generating', 'Waiting for generation...');
+
+        while (!isCompleted && retries < maxRetries) {
+            try {
+                const historyResponse = await fetch('https://o1eubsnq17nqk1-8188.proxy.runpod.net/history');
+                const historyData = await historyResponse.json();
+
+                // Get entries after our start time
+                const entries = Object.entries(historyData)
+                    .filter(([_, data]) => {
+                        const execStart = data?.status?.messages?.find(m => m[0] === "execution_start");
+                        const timestamp = execStart?.[1]?.timestamp || 0;
+                        return timestamp >= startTime;
+                    });
+
+                if (entries.length > 0) {
+                    // Sort by timestamp (most recent first)
+                    const sortedEntries = entries.sort((a, b) => {
+                        const timestampA = a[1]?.status?.messages?.find(m => m[0] === "execution_start")?.[1]?.timestamp || 0;
+                        const timestampB = b[1]?.status?.messages?.find(m => m[0] === "execution_start")?.[1]?.timestamp || 0;
+                        return timestampB - timestampA;
+                    });
+
+                    // Check for our specific generation
+                    for (const [id, data] of sortedEntries) {
+                        const execStart = data?.status?.messages?.find(m => m[0] === "execution_start");
+                        const timestamp = execStart?.[1]?.timestamp || 0;
+                        
+                        // Check if this is our generation (started after our startTime)
+                        if (timestamp >= startTime && data.status?.status_str === "success" && data.status?.completed === true) {
+                            promptId = id;
+                            isCompleted = true;
+                            console.log(`Found completed generation for ${name} v${version} with ID:`, promptId);
+                            break;
+                        }
+                    }
+                }
+
+                if (!isCompleted) {
+                    retries++;
+                    updateProgress(name, version, 'generating', 
+                        `Waiting for generation (attempt ${retries}/${maxRetries})...`);
+                    await new Promise(resolve => setTimeout(resolve, retryInterval));
+                }
+            } catch (error) {
+                console.warn('Error checking history, retrying...', error);
+                retries++;
+                await new Promise(resolve => setTimeout(resolve, retryInterval));
+            }
+        }
+
+        if (!promptId || !isCompleted) {
+            throw new Error('Could not find completed generation in history');
+        }
+
+        // Get the image filename
+        const historyResponse = await fetch(`https://o1eubsnq17nqk1-8188.proxy.runpod.net/history/${promptId}`);
+        const historyData = await historyResponse.json();
+        
+        if (!historyData[promptId]?.outputs?.[9]?.images?.[0]?.filename) {
+            throw new Error('No image found in completed generation');
+        }
+
+        const imageName = historyData[promptId].outputs[9].images[0].filename;
+        console.log(`Found image for ${name} v${version}:`, imageName);
+
+        // Add a small delay to ensure image is fully saved
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Get the image URL
+        const imageUrl = await getImage(imageName);
+        
+        updateProgress(name, version, 'completed', 'Image generated successfully');
+        return imageUrl;
+
+    } catch (error) {
+        console.error(`Error generating image for ${name} (Version ${version}):`, error);
+        updateProgress(name, version, 'error', `Error: ${error.message}`);
+        throw error;
+    }
+}
+
+async function getImage(filename) {
+    try {
+        const imageUrl = `https://o1eubsnq17nqk1-8188.proxy.runpod.net/view?filename=${filename}`;
+        return imageUrl;
+    } catch (error) {
+        console.error('Error getting image:', error);
+        throw error;
+    }
+}
+
+async function generateImages() {
+    const promptInput = document.getElementById('promptInput').value;
+    const statusElement = document.getElementById('status');
+    const imageGrid = document.getElementById('imageGrid');
+    const generateButton = document.getElementById('generateButton');
+    
+    try {
+        const prompts = parsePrompts(promptInput);
+        
+        if (prompts.length === 0) {
+            throw new Error('No valid prompts found. Please use the format: Name -: prompt');
+        }
+
+        generateButton.disabled = true;
+        statusElement.className = 'status success';
+        statusElement.textContent = `Starting generation of ${prompts.length * 2} images...`;
+        
+        imageGrid.innerHTML = '';
+        
+        // Create all image cards first
+        prompts.forEach(({name}) => {
+            for (let version = 1; version <= 2; version++) {
+                const imageCard = document.createElement('div');
+                imageCard.className = 'image-card';
+                imageCard.innerHTML = `
+                    <div class="loading">Waiting to generate ${name} - Version ${version}...</div>
+                    <div class="title">${name} - Version ${version}</div>
+                `;
+                imageGrid.appendChild(imageCard);
+            }
+        });
+
+        // Generate images sequentially
+        for (let i = 0; i < prompts.length; i++) {
+            const {prompt, name} = prompts[i];
+            for (let version = 1; version <= 2; version++) {
+                try {
+                    const imageUrl = await generateSingleImage(prompt, name, version);
+                    
+                    const index = (i * 2) + (version - 1);
+                    const cards = imageGrid.getElementsByClassName('image-card');
+                    if (cards[index]) {
+                        cards[index].innerHTML = `
+                            <img 
+                                src="${imageUrl}" 
+                                alt="${name} - Version ${version}" 
+                                onclick="openModal('${imageUrl}', '${name} - Version ${version}')"
+                                onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'error\'>Failed to load image</div><div class=\'title\'>${name} - Version ${version}</div>'"
+                            >
+                            <div class="title">${name} - Version ${version}</div>
+                        `;
+                    }
+
+                    // Wait between versions
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                } catch (error) {
+                    console.error(`Error generating ${name} version ${version}:`, error);
+                    const index = (i * 2) + (version - 1);
+                    const cards = imageGrid.getElementsByClassName('image-card');
+                    if (cards[index]) {
+                        cards[index].innerHTML = `
+                            <div class="error">Failed to generate image: ${error.message}</div>
+                            <div class="title">${name} - Version ${version}</div>
+                        `;
+                    }
+                }
+            }
+        }
+
+        generateButton.disabled = false;
+        statusElement.textContent = 'All image generation tasks completed!';
+    } catch (error) {
+        console.error('Error in generateImages:', error);
+        generateButton.disabled = false;
+        statusElement.className = 'status error';
+        statusElement.textContent = `Error: ${error.message}`;
+    }
+}
+
+    </script>
+</body>
+</html>
