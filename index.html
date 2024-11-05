@@ -290,12 +290,54 @@
             border-radius: 4px;
             border-left: 3px solid #007bff;
         }
+        .image-upload-section {
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.upload-label {
+    display: inline-block;
+    padding: 12px 20px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.upload-label:hover {
+    background: #e0e0e0;
+}
+
+.upload-label input[type="file"] {
+    display: none;
+}
+
+.image-preview {
+    margin-top: 10px;
+    max-width: 200px;
+    max-height: 200px;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.image-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
     </style>
 </head>
 <body>
   <div class="container">
     <div class="input-section">
         <textarea id="promptInput" placeholder="Enter your image prompts here...&#10;Format: {{{Cover Page-:: prompt text&#10;hairstyle1-:: prompt text}}}"></textarea>
+        <div class="image-upload-section">
+          <label for="sourceImage" class="upload-label">
+              Upload Source Image
+              <input type="file" id="sourceImage" accept="image/*" onchange="handleImageUpload(event)">
+          </label>
+          <div id="imagePreview" class="image-preview"></div>
+      </div>
         <button onclick="validateAndShowPrompts()">Preview Prompts</button>
         <div id="promptPreview" class="prompt-preview" style="display: none;"></div>
         <button onclick="generateImages()" id="generateButton" style="display: none;">Start Generation</button>
@@ -409,8 +451,49 @@
             "batch_size": 1
         },
         "class_type": "EmptySD3LatentImage"
+    },
+    "31": {
+        "inputs": {
+            "enabled": true,
+            "swap_model": "inswapper_128.onnx",
+            "facedetection": "retinaface_resnet50",
+            "face_restore_model": "codeformer-v0.1.0.pth",
+            "face_restore_visibility": 1,
+            "codeformer_weight": 0.5,
+            "detect_gender_input": "no",
+            "detect_gender_source": "no",
+            "input_faces_index": "0",
+            "source_faces_index": "0",
+            "console_log_level": 1,
+            "input_image": ["8", 0],
+            "source_image": ["32", 0]
+        },
+        "class_type": "ReActorFaceSwap"
+    },
+    "32": {
+        "inputs": {
+            "image": "",
+            "upload": "image"
+        },
+        "class_type": "LoadImage"
     }
+
 };
+
+let uploadedImage = null;
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            uploadedImage = e.target.result;
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = `<img src="${uploadedImage}" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+    }
+}
 
 window.onscroll = function() {
     const scrollTop = document.getElementById('scrollTop');
@@ -524,11 +607,16 @@ async function updateProgress(promptName, version, status, message = '') {
 
 async function generateSingleImage(prompt, name, version) {
     try {
+        if (!uploadedImage) {
+            throw new Error('Please upload a source image first');
+        }
+
         updateProgress(name, version, 'generating', 'Initializing generation...');
         
         const workflowInstance = JSON.parse(JSON.stringify(workflow));
         workflowInstance["6"].inputs.text = prompt;
         workflowInstance["25"].inputs.noise_seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+        workflowInstance["32"].inputs.image = uploadedImage;
 
         const clientId = crypto.randomUUID();
         const startTime = Date.now(); // Record start time
@@ -536,7 +624,7 @@ async function generateSingleImage(prompt, name, version) {
         updateProgress(name, version, 'generating', 'Sending prompt to server...');
         
         // Send prompt
-        await fetch('https://o1eubsnq17nqk1-8188.proxy.runpod.net/prompt', {
+        await fetch('https://dlxzougrt3trf5-8188.proxy.runpod.net/prompt', {
             method: 'POST',
             mode: "no-cors",
             headers: { 'Content-Type': 'application/json' },
@@ -557,7 +645,7 @@ async function generateSingleImage(prompt, name, version) {
 
         while (!isCompleted && retries < maxRetries) {
             try {
-                const historyResponse = await fetch('https://o1eubsnq17nqk1-8188.proxy.runpod.net/history');
+                const historyResponse = await fetch('https://dlxzougrt3trf5-8188.proxy.runpod.net/history');
                 const historyData = await historyResponse.json();
 
                 // Get entries after our start time
@@ -609,7 +697,7 @@ async function generateSingleImage(prompt, name, version) {
         }
 
         // Get the image filename
-        const historyResponse = await fetch(`https://o1eubsnq17nqk1-8188.proxy.runpod.net/history/${promptId}`);
+        const historyResponse = await fetch(`https://dlxzougrt3trf5-8188.proxy.runpod.net/history/${promptId}`);
         const historyData = await historyResponse.json();
         
         if (!historyData[promptId]?.outputs?.[9]?.images?.[0]?.filename) {
@@ -637,7 +725,7 @@ async function generateSingleImage(prompt, name, version) {
 
 async function getImage(filename) {
     try {
-        const imageUrl = `https://o1eubsnq17nqk1-8188.proxy.runpod.net/view?filename=${filename}`;
+        const imageUrl = `https://dlxzougrt3trf5-8188.proxy.runpod.net/view?filename=${filename}`;
         return imageUrl;
     } catch (error) {
         console.error('Error getting image:', error);
