@@ -357,128 +357,346 @@
 
     <script>
         const workflow = {
-    "6": {
-        "inputs": {
-            "text": "",
-            "clip": ["11", 0]
-        },
-        "class_type": "CLIPTextEncode"
+  "6": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "50",
+        1
+      ]
     },
-    "8": {
-        "inputs": {
-            "samples": ["13", 0],
-            "vae": ["10", 0]
-        },
-        "class_type": "VAEDecode"
-    },
-    "9": {
-        "inputs": {
-            "filename_prefix": "ComfyUI",
-            "images": ["8", 0]
-        },
-        "class_type": "SaveImage"
-    },
-    "10": {
-        "inputs": {
-            "vae_name": "ae.sft"
-        },
-        "class_type": "VAELoader"
-    },
-    "11": {
-        "inputs": {
-            "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
-            "clip_name2": "clip_l.safetensors",
-            "type": "flux"
-        },
-        "class_type": "DualCLIPLoader"
-    },
-    "12": {
-        "inputs": {
-            "unet_name": "pixelwave_flux1_dev_fp8_03.safetensors",
-            "weight_dtype": "fp8_e4m3fn"
-        },
-        "class_type": "UNETLoader"
-    },
-    "13": {
-        "inputs": {
-            "noise": ["25", 0],
-            "guider": ["22", 0],
-            "sampler": ["16", 0],
-            "sigmas": ["17", 0],
-            "latent_image": ["27", 0]
-        },
-        "class_type": "SamplerCustomAdvanced"
-    },
-    "16": {
-        "inputs": {
-            "sampler_name": "dpmpp_2m"
-        },
-        "class_type": "KSamplerSelect"
-    },
-    "17": {
-        "inputs": {
-            "scheduler": "sgm_uniform",
-            "steps": 30,
-            "denoise": 1,
-            "model": ["12", 0]
-        },
-        "class_type": "BasicScheduler"
-    },
-    "22": {
-        "inputs": {
-            "model": ["12", 0],
-            "conditioning": ["26", 0]
-        },
-        "class_type": "BasicGuider"
-    },
-    "25": {
-        "inputs": {
-            "noise_seed": 1040318553032668
-        },
-        "class_type": "RandomNoise"
-    },
-    "26": {
-        "inputs": {
-            "guidance": 3.5,
-            "conditioning": ["6", 0]
-        },
-        "class_type": "FluxGuidance"
-    },
-    "27": {
-        "inputs": {
-            "width": 1440,
-            "height": 2560,
-            "batch_size": 1
-        },
-        "class_type": "EmptySD3LatentImage"
-    },
-    "31": {
-        "inputs": {
-            "enabled": true,
-            "swap_model": "inswapper_128.onnx",
-            "facedetection": "retinaface_resnet50",
-            "face_restore_model": "codeformer-v0.1.0.pth",
-            "face_restore_visibility": 1,
-            "codeformer_weight": 0.5,
-            "detect_gender_input": "no",
-            "detect_gender_source": "no",
-            "input_faces_index": "0",
-            "source_faces_index": "0",
-            "console_log_level": 1,
-            "input_image": ["8", 0],
-            "source_image": ["32", 0]
-        },
-        "class_type": "ReActorFaceSwap"
-    },
-    "32": {
-        "inputs": {
-            "image": "",
-            "upload": "image"
-        },
-        "class_type": "LoadImage"
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
     }
-
-};
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "17",
+        0
+      ],
+      "latent_image": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "dpmpp_2m"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "17": {
+    "inputs": {
+      "scheduler": "sgm_uniform",
+      "steps": 30,
+      "denoise": 1,
+      "model": [
+        "30",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "conditioning": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "BasicGuider"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 940111320846863
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 3.5,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "27": {
+    "inputs": {
+      "width": 720,
+      "height": 1280,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "30": {
+    "inputs": {
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": 720,
+      "height": 1280,
+      "model": [
+        "50",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingFlux",
+    "_meta": {
+      "title": "ModelSamplingFlux"
+    }
+  },
+  "41": {
+    "inputs": {
+      "upscale_by": 2,
+      "seed": 811406461130046,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.2,
+      "mode_type": "Linear",
+      "tile_width": 720,
+      "tile_height": 1280,
+      "mask_blur": 8,
+      "tile_padding": 32,
+      "seam_fix_mode": "None",
+      "seam_fix_denoise": 1,
+      "seam_fix_width": 64,
+      "seam_fix_mask_blur": 8,
+      "seam_fix_padding": 16,
+      "force_uniform_tiles": true,
+      "tiled_decode": false,
+      "image": [
+        "8",
+        0
+      ],
+      "model": [
+        "50",
+        0
+      ],
+      "positive": [
+        "42",
+        0
+      ],
+      "negative": [
+        "42",
+        0
+      ],
+      "vae": [
+        "46",
+        0
+      ],
+      "upscale_model": [
+        "44",
+        0
+      ]
+    },
+    "class_type": "UltimateSDUpscale",
+    "_meta": {
+      "title": "Ultimate SD Upscale"
+    }
+  },
+  "42": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "50",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "43": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "52",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "44": {
+    "inputs": {
+      "model_name": "4x-UltraSharp.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Load Upscale Model"
+    }
+  },
+  "46": {
+    "inputs": {
+      "vae_name": "ae.sft"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "47": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "48": {
+    "inputs": {
+      "unet_name": "pixelwave_flux1_dev_fp8_03.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "49": {
+    "inputs": {
+      "switch_1": "On",
+      "lora_name_1": "pola_photo_araminta_k.safetensors",
+      "model_weight_1": 0.9500000000000001,
+      "clip_weight_1": 1,
+      "switch_2": "Off",
+      "lora_name_2": "ultrarealistic.safetensors",
+      "model_weight_2": 0.8,
+      "clip_weight_2": 1,
+      "switch_3": "Off",
+      "lora_name_3": "None",
+      "model_weight_3": 1,
+      "clip_weight_3": 1
+    },
+    "class_type": "CR LoRA Stack",
+    "_meta": {
+      "title": "💊 CR LoRA Stack"
+    }
+  },
+  "50": {
+    "inputs": {
+      "model": [
+        "48",
+        0
+      ],
+      "clip": [
+        "47",
+        0
+      ],
+      "lora_stack": [
+        "49",
+        0
+      ]
+    },
+    "class_type": "CR Apply LoRA Stack",
+    "_meta": {
+      "title": "💊 CR Apply LoRA Stack"
+    }
+  },
+  "52": {
+    "inputs": {
+      "enabled": true,
+      "swap_model": "inswapper_128.onnx",
+      "facedetection": "retinaface_resnet50",
+      "face_restore_model": "codeformer-v0.1.0.pth",
+      "face_restore_visibility": 1,
+      "codeformer_weight": 0.5,
+      "detect_gender_input": "no",
+      "detect_gender_source": "no",
+      "input_faces_index": "0",
+      "source_faces_index": "0",
+      "console_log_level": 1,
+      "input_image": [
+        "41",
+        0
+      ],
+      "source_image": [
+        "53",
+        0
+      ]
+    },
+    "class_type": "ReActorFaceSwap",
+    "_meta": {
+      "title": "ReActor 🌌 Fast Face Swap"
+    }
+  },
+  "53": {
+    "inputs": {
+      "image": "input1.png",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  }
+}
 
 let uploadedImage = null;
 
@@ -618,11 +836,7 @@ async function generateSingleImage(prompt, name, version) {
         workflowInstance["25"].inputs.noise_seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
         
         // Convert uploaded image for ComfyUI
-        const base64Data = uploadedImage.split(',')[1];
-        workflowInstance["32"].inputs = {
-            "image": base64Data,
-            "upload": "image"
-        };
+        
 
         const clientId = crypto.randomUUID();
         const startTime = Date.now();
@@ -630,7 +844,7 @@ async function generateSingleImage(prompt, name, version) {
         updateProgress(name, version, 'generating', 'Sending prompt to server...');
         
         // Send prompt
-        await fetch('https://dlxzougrt3trf5-8188.proxy.runpod.net/prompt', {
+        await fetch('https://44nlndgovhn5cn-8188.proxy.runpod.net/prompt', {
             method: 'POST',
             mode: "no-cors",
             headers: { 'Content-Type': 'application/json' },
@@ -651,7 +865,7 @@ async function generateSingleImage(prompt, name, version) {
 
         while (!isCompleted && retries < maxRetries) {
             try {
-                const historyResponse = await fetch('https://dlxzougrt3trf5-8188.proxy.runpod.net/history');
+                const historyResponse = await fetch('https://44nlndgovhn5cn-8188.proxy.runpod.net/history');
                 const historyData = await historyResponse.json();
 
                 // Get entries after our start time
@@ -703,14 +917,14 @@ async function generateSingleImage(prompt, name, version) {
         }
 
         // Get the image filename
-        const historyResponse = await fetch(`https://dlxzougrt3trf5-8188.proxy.runpod.net/history/${promptId}`);
+        const historyResponse = await fetch(`https://44nlndgovhn5cn-8188.proxy.runpod.net/history/${promptId}`);
         const historyData = await historyResponse.json();
         
-        if (!historyData[promptId]?.outputs?.[9]?.images?.[0]?.filename) {
+        if (!historyData[promptId]?.outputs?.[43]?.images?.[0]?.filename) {
             throw new Error('No image found in completed generation');
         }
 
-        const imageName = historyData[promptId].outputs[9].images[0].filename;
+        const imageName = historyData[promptId].outputs[43].images[0].filename;
         console.log(`Found image for ${name} v${version}:`, imageName);
 
         // Add a small delay to ensure image is fully saved
@@ -731,7 +945,7 @@ async function generateSingleImage(prompt, name, version) {
 
 async function getImage(filename) {
     try {
-        const imageUrl = `https://dlxzougrt3trf5-8188.proxy.runpod.net/view?filename=${filename}`;
+        const imageUrl = `https://44nlndgovhn5cn-8188.proxy.runpod.net/view?filename=${filename}`;
         return imageUrl;
     } catch (error) {
         console.error('Error getting image:', error);
