@@ -36,6 +36,28 @@
             width: 100%;
         }
 
+        /* Add new styles for server input */
+        .server-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .filename-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+
         textarea {
             width: 100%;
             min-height: 150px;
@@ -330,14 +352,14 @@
 <body>
   <div class="container">
     <div class="input-section">
+        <!-- New server URL input -->
+        <input type="text" id="serverUrl" class="server-input" placeholder="Enter server URL (e.g., https://4wdlanftptjsyv-8188.proxy.runpod.net)" value="https://4wdlanftptjsyv-8188.proxy.runpod.net">
+        
+        <!-- New filename input -->
+        <input type="text" id="filename" class="filename-input" placeholder="Enter source image filename (e.g., input.png)" value="input.png">
+        
         <textarea id="promptInput" placeholder="Enter your image prompts here...&#10;Format: {{{Cover Page-:: prompt text&#10;hairstyle1-:: prompt text}}}"></textarea>
-        <div class="image-upload-section">
-          <label for="sourceImage" class="upload-label">
-              Upload Source Image
-              <input type="file" id="sourceImage" accept="image/*" onchange="handleImageUpload(event)">
-          </label>
-          <div id="imagePreview" class="image-preview"></div>
-      </div>
+        
         <button onclick="validateAndShowPrompts()">Preview Prompts</button>
         <div id="promptPreview" class="prompt-preview" style="display: none;"></div>
         <button onclick="generateImages()" id="generateButton" style="display: none;">Start Generation</button>
@@ -688,7 +710,7 @@
   },
   "53": {
     "inputs": {
-      "image": "input1.png",
+      "image": "",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -825,8 +847,11 @@ async function updateProgress(promptName, version, status, message = '') {
 
 async function generateSingleImage(prompt, name, version) {
     try {
-        if (!uploadedImage) {
-            throw new Error('Please upload a source image first');
+        const serverUrl = document.getElementById('serverUrl').value.replace(/\/$/, '');
+        const filename = document.getElementById('filename').value;
+            
+        if (!filename) {
+            throw new Error('Please enter a source image filename');
         }
 
         updateProgress(name, version, 'generating', 'Initializing generation...');
@@ -834,6 +859,7 @@ async function generateSingleImage(prompt, name, version) {
         const workflowInstance = JSON.parse(JSON.stringify(workflow));
         workflowInstance["6"].inputs.text = prompt;
         workflowInstance["25"].inputs.noise_seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+        workflowInstance["53"].inputs.image = filename;
         
         // Convert uploaded image for ComfyUI
         
@@ -844,7 +870,7 @@ async function generateSingleImage(prompt, name, version) {
         updateProgress(name, version, 'generating', 'Sending prompt to server...');
         
         // Send prompt
-        await fetch('https://44nlndgovhn5cn-8188.proxy.runpod.net/prompt', {
+        await fetch(`${serverUrl}/prompt`, {
             method: 'POST',
             mode: "no-cors",
             headers: { 'Content-Type': 'application/json' },
@@ -865,7 +891,7 @@ async function generateSingleImage(prompt, name, version) {
 
         while (!isCompleted && retries < maxRetries) {
             try {
-                const historyResponse = await fetch('https://44nlndgovhn5cn-8188.proxy.runpod.net/history');
+                const historyResponse = await fetch(`${serverUrl}/history`);
                 const historyData = await historyResponse.json();
 
                 // Get entries after our start time
@@ -917,7 +943,7 @@ async function generateSingleImage(prompt, name, version) {
         }
 
         // Get the image filename
-        const historyResponse = await fetch(`https://44nlndgovhn5cn-8188.proxy.runpod.net/history/${promptId}`);
+        const historyResponse = await fetch(`${serverUrl}/history/${promptId}`);
         const historyData = await historyResponse.json();
         
         if (!historyData[promptId]?.outputs?.[43]?.images?.[0]?.filename) {
@@ -944,14 +970,15 @@ async function generateSingleImage(prompt, name, version) {
 }
 
 async function getImage(filename) {
-    try {
-        const imageUrl = `https://44nlndgovhn5cn-8188.proxy.runpod.net/view?filename=${filename}`;
-        return imageUrl;
-    } catch (error) {
-        console.error('Error getting image:', error);
-        throw error;
+        try {
+            const serverUrl = document.getElementById('serverUrl').value.replace(/\/$/, '');
+            const imageUrl = `${serverUrl}/view?filename=${filename}`;
+            return imageUrl;
+        } catch (error) {
+            console.error('Error getting image:', error);
+            throw error;
+        }
     }
-}
 
 async function generateImages() {
     const promptInput = document.getElementById('promptInput').value;
